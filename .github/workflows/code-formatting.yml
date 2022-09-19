@@ -1,0 +1,34 @@
+name: 'Code formatting'
+
+on:
+    push:
+        paths:
+            - '**.php'
+            - '**.php_cs'
+            - '.github/workflows/code-formatting.yml'
+            - 'composer.lock'
+jobs:
+    code-formatting:
+        runs-on: 'ubuntu-18.04'
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
+
+            - name: Run php-cs-fixer
+              uses: docker://oskarstark/php-cs-fixer-ga
+              with:
+                  args: --config=.php_cs --allow-risky=yes
+
+            - name: Extract branch name
+              shell: bash
+              run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+              id: extract_branch
+
+            - name: Commit changes
+              uses: stefanzweifel/git-auto-commit-action@v2.3.0
+              with:
+                  commit_message: PHP CS changes
+                  branch: ${{ steps.extract_branch.outputs.branch }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
